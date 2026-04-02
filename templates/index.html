@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Report Editor - ToolsCraft Hub</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 15px;}
+        .container-wrapper { width: 100%; max-width: 450px; margin-top: 20px;}
+        .card { background: white; padding: 30px 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px;}
+        .logo { width: 150px; margin-bottom: 15px; }
+        h2 { color: #2563eb; margin-bottom: 20px; margin-top: 0; font-size: 20px;}
+        .input-group { text-align: left; width: 100%; margin: 0 auto 15px auto; }
+        .label-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        label { font-weight: bold; font-size: 14px; color: #333; margin: 0; }
+        .star-btn { background: #e0e7ff; color: #2563eb; border: 1px solid #2563eb; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;}
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px;}
+        button[type="submit"].main-btn { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 8px; font-size: 16px; font-weight: bold;}
+        
+        .history-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .history-box h3 { font-size: 16px; color: #333; margin-top: 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;}
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f3f4f6;}
+        .file-name { font-size: 13px; color: #555; word-break: break-all; max-width: 55%; text-align: left;}
+        
+        .action-buttons { display: flex; gap: 8px; align-items: center;}
+        .down-btn { background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none;}
+        .down-btn:hover { background: #059669; }
+        .del-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;}
+        .del-btn:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="container-wrapper">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 14px; font-weight: bold; color: #555;">ইউজার: {{ username }}</span>
+                <div>
+                    {% if role == 'admin' %}
+                        <a href="/admin" style="color: white; background: #2563eb; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; margin-right: 10px;">Admin</a>
+                    {% endif %}
+                    <a href="/logout" style="color: red; text-decoration: none; font-size: 14px; font-weight: bold;">লগআউট</a>
+                </div>
+            </div>
+            
+            <img src="/static/logo.png" alt="ToolsCraft Hub Logo" class="logo">
+            <h2>AI Report Generator</h2>
+            
+            <div style="background: #e0e7ff; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin: 5px 0; font-weight: bold; color: #1e40af;">বাকি ক্রেডিট: <span style="font-size: 18px;">{{ credits }}</span> টি</p>
+            </div>
+
+            <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return handleFormSubmit(event)">
+                <div class="input-group">
+                    <div class="label-header">
+                        <label for="ai_percentage">AI Percentage:</label>
+                        <button type="button" class="star-btn" onclick="insertStar()">Use *</button>
+                    </div>
+                    <input type="text" inputmode="numeric" name="ai_percentage" id="ai_percentage" placeholder="যেমন: 15 অথবা *" required>
+                </div>
+                <div class="input-group">
+                    <label for="file" style="margin-bottom: 8px; display: block;">পিডিএফ ফাইল আপলোড করুন:</label>
+                    <input type="file" name="file" id="file" accept=".pdf" required>
+                </div>
+                <button type="submit" id="submitBtn" class="main-btn" {% if credits <= 0 %} disabled style="background:#ccc;" {% endif %}>Upload & Process</button>
+            </form>
+        </div>
+
+        <div class="history-box">
+            <h3>আপনার তৈরি করা ফাইলসমূহ</h3>
+            {% if user_files %}
+                {% for f in user_files %}
+                <div class="file-item">
+                    <div class="file-name">
+                        <strong>{{ f[1][9:] }}</strong><br>
+                        <span style="font-size: 11px; color: #888;">{{ f[2] }}</span>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="/download_past_file/{{ f[0] }}" class="down-btn">ডাউনলোড</a>
+                        
+                        <form action="/delete_my_file" method="POST" style="margin: 0;">
+                            <input type="hidden" name="file_id" value="{{ f[0] }}">
+                            <button type="submit" class="del-btn">ডিলিট</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="font-size: 13px; color: #888; text-align: center;">কোনো ফাইল নেই!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function insertStar() {
+            document.getElementById('ai_percentage').value = '*';
+        }
+        document.getElementById('ai_percentage').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9*]/g, '');
+        });
+        function handleFormSubmit(event) {
+            const aiInput = document.getElementById('ai_percentage').value.trim();
+            if (aiInput !== '*' && !/^\d+$/.test(aiInput)) {
+                alert("ভুল ইনপুট! শুধুমাত্র সংখ্যা অথবা স্টার (*) ব্যবহার করুন।");
+                event.preventDefault();
+                return false;
+            }
+            document.getElementById('submitBtn').innerHTML = "Processing...";
+            setTimeout(() => { window.location.reload(); }, 3000);
+            return true;
+        }
+    </script>
+</body>
+</html>
