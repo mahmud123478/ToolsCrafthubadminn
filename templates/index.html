@@ -12,69 +12,88 @@
         h2 { color: #2563eb; margin-bottom: 20px; margin-top: 0; font-size: 20px;}
         .input-group { text-align: left; width: 100%; margin: 0 auto 15px auto; }
         .label-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        label { font-weight: bold; font-size: 14px; color: #333; margin: 0; }
-        .star-btn { background: #e0e7ff; color: #2563eb; border: 1px solid #2563eb; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;}
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px;}
-        button[type="submit"].main-btn { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 8px; font-size: 16px; font-weight: bold;}
+        label { font-weight: bold; color: #333; font-size: 14px;}
+        .star-btn { color: #2563eb; font-size: 12px; cursor: pointer; text-decoration: underline; background: #e0e7ff; padding: 2px 8px; border-radius: 4px;}
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px;}
+        .file-upload-box { border: 2px dashed #2563eb; padding: 15px; border-radius: 8px; cursor: pointer; position: relative; background: #f8fafc; transition: 0.3s;}
+        .file-upload-box:hover { background: #e0e7ff; }
+        .file-input { opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;}
+        .file-msg { color: #2563eb; font-weight: 500; font-size: 14px; display: block; }
+        .btn-submit { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 5px;}
+        .btn-submit:hover { background: #1d4ed8; }
+        .loading-text { display: none; color: #10b981; font-weight: bold; margin-top: 15px; }
+        .user-info { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; font-size: 14px;}
+        .logout-btn { color: red; text-decoration: none; font-weight: bold; }
+        .admin-btn { color: white; background: #10b981; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 12px;}
         
-        .history-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .history-box h3 { font-size: 16px; color: #333; margin-top: 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;}
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f3f4f6;}
-        .file-name { font-size: 13px; color: #555; word-break: break-all; max-width: 55%; text-align: left;}
-        
-        .action-buttons { display: flex; gap: 8px; align-items: center;}
-        .down-btn { background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none;}
-        .down-btn:hover { background: #059669; }
-        .del-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;}
-        .del-btn:hover { background: #dc2626; }
+        .history-box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .history-title { font-weight: bold; margin-bottom: 10px; font-size: 15px; color: #333; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;}
+        .file-item:last-child { border-bottom: none; }
+        .file-name { font-size: 13px; color: #2563eb; word-break: break-all; max-width: 60%; text-align: left;}
+        .file-date { font-size: 11px; color: #888; display: block;}
+        .actions { display: flex; gap: 8px; }
+        .down-btn, .del-btn { padding: 5px 10px; border-radius: 5px; font-size: 12px; text-decoration: none; border: none; cursor: pointer; color: white;}
+        .down-btn { background: #10b981; }
+        .del-btn { background: #ef4444; }
     </style>
 </head>
 <body>
     <div class="container-wrapper">
+        <div class="user-info">
+            <div>
+                <b style="color: #2563eb;">{{ username }}</b> <br>
+                <span style="font-size: 12px; color: #555;">ক্রেডিট: <b>{{ credits }}</b></span>
+            </div>
+            <div style="text-align: right;">
+                {% if role == 'admin' %}
+                    <a href="/admin" class="admin-btn">Admin Panel</a><br><br>
+                {% endif %}
+                <a href="/logout" class="logout-btn">লগআউট</a>
+            </div>
+        </div>
+
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <span style="font-size: 14px; font-weight: bold; color: #555;">ইউজার: {{ username }}</span>
-                <div>
-                    {% if role == 'admin' %}
-                        <a href="/admin" style="color: white; background: #2563eb; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 12px; margin-right: 10px;">Admin</a>
-                    {% endif %}
-                    <a href="/logout" style="color: red; text-decoration: none; font-size: 14px; font-weight: bold;">লগআউট</a>
-                </div>
-            </div>
-            
-            <img src="/static/logo.png" alt="ToolsCraft Hub Logo" class="logo">
-            <h2>AI Report Generator</h2>
-            
-            <div style="background: #e0e7ff; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="margin: 5px 0; font-weight: bold; color: #1e40af;">বাকি ক্রেডিট: <span style="font-size: 18px;">{{ credits }}</span> টি</p>
-            </div>
+            <img src="/static/logo.png" alt="Logo" class="logo">
+            <h2>Report & Similarity Editor</h2>
 
             <form action="/upload" method="POST" enctype="multipart/form-data" onsubmit="return handleFormSubmit(event)">
                 <div class="input-group">
                     <div class="label-header">
                         <label for="ai_percentage">AI Percentage:</label>
-                        <button type="button" class="star-btn" onclick="insertStar()">Use *</button>
                     </div>
-                    <input type="text" inputmode="numeric" name="ai_percentage" id="ai_percentage" placeholder="যেমন: 15 অথবা *" required>
+                    <div style="position: relative;">
+                        <input type="text" id="ai_percentage" name="ai_percentage" placeholder="যেমন: 58" required>
+                        <span class="star-btn" onclick="insertStar()">* (No Score)</span>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="file" style="margin-bottom: 8px; display: block;">পিডিএফ ফাইল আপলোড করুন:</label>
-                    <input type="file" name="file" id="file" accept=".pdf" required>
+
+                <p style="text-align: left; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #333;">১. AI Report ফাইল দিন:</p>
+                <div class="file-upload-box" style="margin-bottom: 15px;">
+                    <span class="file-msg" id="ai-file-name">এখানে ক্লিক করে AI Report ফাইল সিলেক্ট করুন</span>
+                    <input type="file" name="file_ai" id="file_ai" class="file-input" accept=".pdf" required onchange="document.getElementById('ai-file-name').innerText = this.files[0].name; document.getElementById('ai-file-name').style.color = '#10b981';">
                 </div>
-                <button type="submit" id="submitBtn" class="main-btn" {% if credits <= 0 %} disabled style="background:#ccc;" {% endif %}>Upload & Process</button>
+
+                <p style="text-align: left; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #333;">২. Similarity ফাইল দিন:</p>
+                <div class="file-upload-box" style="margin-bottom: 20px;">
+                    <span class="file-msg" id="sim-file-name">এখানে ক্লিক করে Similarity ফাইল সিলেক্ট করুন</span>
+                    <input type="file" name="file_sim" id="file_sim" class="file-input" accept=".pdf" required onchange="document.getElementById('sim-file-name').innerText = this.files[0].name; document.getElementById('sim-file-name').style.color = '#10b981';">
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Process</button>
             </form>
         </div>
 
         <div class="history-box">
-            <h3>আপনার তৈরি করা ফাইলসমূহ</h3>
+            <div class="history-title">আপনার প্রসেস করা ফাইলগুলো</div>
             {% if user_files %}
                 {% for f in user_files %}
                 <div class="file-item">
-                    <div class="file-name">
-                        <strong>{{ f[1][9:] }}</strong><br>
-                        <span style="font-size: 11px; color: #888;">{{ f[2] }}</span>
+                    <div style="flex: 1;">
+                        <div class="file-name">{{ f[1][9:] }}</div>
+                        <div class="file-date">{{ f[2] }}</div>
                     </div>
-                    <div class="action-buttons">
+                    <div class="actions">
                         <a href="/download_past_file/{{ f[0] }}" class="down-btn">ডাউনলোড</a>
                         
                         <form action="/delete_my_file" method="POST" style="margin: 0;">
@@ -104,6 +123,12 @@
                 event.preventDefault();
                 return false;
             }
+            document.getElementById('submitBtn').innerHTML = "Processing...";
+            return true;
+        }
+    </script>
+</body>
+</html>
             document.getElementById('submitBtn').innerHTML = "Processing...";
             setTimeout(() => { window.location.reload(); }, 3000);
             return true;
