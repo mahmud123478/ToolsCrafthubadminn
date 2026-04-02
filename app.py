@@ -102,7 +102,7 @@ def check_and_reset_credits(username):
     return 0
 
 # --- PDF Processing Logic ---
-def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percentage):
+def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percentage, shared_id):
     user_doc = fitz.open(user_pdf_path)
     if len(user_doc) > 0:
         user_doc.delete_page(0)
@@ -117,7 +117,7 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
         actual_chars += len(text)
     
     new_size = f"{os.path.getsize(user_pdf_path) / 1024:.1f} KB"
-    new_id = f"trn:oid:::1:{random.randint(1000000000, 9999999999)}"
+    new_id = shared_id
     
     base_name = os.path.splitext(original_filename)[0].replace("_", " ")
     base_name = re.sub(r'(?i)ai\s*report', '', base_name).strip()
@@ -175,7 +175,6 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
             page1.insert_text((x_pos, inst.y1 - 2), str(new_txt), 
                              fontsize=18 if is_main_title else 9.5, fontname="hebo" if is_main_title else "helv", color=(0, 0, 0))
 
-    # --- "Aa Aa" পরিবর্তন করার লজিক (সাইজ ২০ এবং গাঢ় কালো রঙ) ---
     aa_matches = page1.search_for("Aa Aa")
     if aa_matches:
         for aa_inst in aa_matches:
@@ -185,7 +184,6 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
             
             custom_names_text = "Labib Hasan"
             page1.insert_text((aa_inst.x0, aa_inst.y1), custom_names_text, fontsize=20, fontname="hebo", color=(0, 0, 0))
-    # --------------------------------------------------
 
     if len(template_doc) > 1:
         page2 = template_doc[1]
@@ -196,23 +194,19 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
             page2.add_redact_annot(white_box, fill=(1, 1, 1))
             page2.apply_redactions()
             
-            # --- একদম ১০০% সঠিক ফন্ট বসানোর কোড ---
             font_name_to_use = "hebo"
             font_size_to_use = 18
             font_path = os.path.join("static", "LexendDeca-Medium.ttf")
             
             if os.path.exists(font_path):
                 try:
-                    # ফন্টটি প্রথমে রেজিস্টার করে নেওয়া হলো
                     page2.insert_font(fontname="lexend", fontfile=font_path)
                     font_name_to_use = "lexend"
                     font_size_to_use = 17
                 except Exception as e:
                     print(f"Font Load Error: {e}")
             
-            # রেজিস্টার করা ফন্ট দিয়ে টেক্সট বসানো হলো
             page2.insert_text((inst.x0, inst.y1 - 4), f"{ai_percentage}% detected as AI", fontsize=font_size_to_use, fontname=font_name_to_use, color=(0, 0, 0))
-            # --------------------------------------
 
         group_inst = page2.search_for("AI-generated only") or page2.search_for("Al-generated only")
         if group_inst:
@@ -225,7 +219,6 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
             page2.add_redact_annot(left_num_rect, fill=(1,1,1))
             page2.apply_redactions()
             
-            # --- পার্সেন্টেজ অনুযায়ী র‍্যান্ডম নাম্বারের লজিক ---
             try:
                 ai_val = int(str(ai_percentage).replace('*', '').strip())
                 if ai_val == 0:
@@ -240,7 +233,6 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
                     random_detection_num = random.randint(36, 77)
             except:
                 random_detection_num = random.randint(1, 77)
-            # ---------------------------------------------------
             
             x_pos = group_inst[0].x0 - 11 if random_detection_num > 9 else group_inst[0].x0 - 8
             page2.insert_text((x_pos, group_inst[0].y1 - 1.5), str(random_detection_num), fontsize=8.5, fontname="hebo", color=(0, 0, 0))
@@ -273,6 +265,37 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
     template_doc.save(output_path)
     template_doc.close()
     user_doc.close()
+
+def apply_header_and_footer(input_pdf_path, output_path, shared_id):
+    doc = fitz.open(input_pdf_path)
+    total_pages_final = len(doc)
+    new_id = shared_id
+
+    for i, page in enumerate(doc):
+        rect = page.rect
+        
+        header_height = 50 if i < 2 else 38
+        footer_height = 50 if i < 2 else 38
+        header_title = "Cover Page" if i == 0 else "AI Writing Overview" if i == 1 else "AI Writing Submission"
+        header_text = f"Page {i + 1} of {total_pages_final} - {header_title}"
+
+        top_rect = fitz.Rect(0, 0, rect.width, header_height)
+        page.draw_rect(top_rect, fill=(1, 1, 1), color=None, overlay=True)
+        
+        bottom_rect = fitz.Rect(0, rect.height - footer_height, rect.width, rect.height)
+        page.draw_rect(bottom_rect, fill=(1, 1, 1), color=None, overlay=True)
+
+        if os.path.exists("static/logo.png"):
+            page.insert_image(fitz.Rect(20, 15, 90, 35), filename="static/logo.png")
+            page.insert_image(fitz.Rect(20, rect.height - 35, 90, rect.height - 15), filename="static/logo.png")
+
+        page.insert_text(fitz.Point(110, 30), header_text, fontsize=7, color=(0, 0, 0))
+        page.insert_text(fitz.Point(rect.width - 200, 30), f"Submission ID {new_id}", fontsize=7, color=(0, 0, 0))
+        page.insert_text(fitz.Point(110, rect.height - 20), header_text, fontsize=7, color=(0, 0, 0))
+        page.insert_text(fitz.Point(rect.width - 200, rect.height - 20), f"Submission ID {new_id}", fontsize=7, color=(0, 0, 0))
+
+    doc.save(output_path)
+    doc.close()
 
 # --- Auth Routes ---
 @app.get("/login", response_class=HTMLResponse)
@@ -322,7 +345,6 @@ async def home(request: Request):
 
     username = request.session.get("username")
     role = request.session.get("role")
-    
     credits = check_and_reset_credits(username)
 
     conn = sqlite3.connect(DB_FILE)
@@ -340,7 +362,7 @@ async def home(request: Request):
     })
 
 @app.post("/upload")
-async def upload_file(request: Request, file: UploadFile = File(...), ai_percentage: str = Form(...)):
+async def upload_file(request: Request, file_ai: UploadFile = File(...), file_sim: UploadFile = File(...), ai_percentage: str = Form(...)):
     if not check_active_session(request):
         request.session.clear()
         return RedirectResponse(url="/login", status_code=303)
@@ -352,26 +374,41 @@ async def upload_file(request: Request, file: UploadFile = File(...), ai_percent
 
     try:
         unique_id = str(uuid.uuid4())[:8]
-        saved_filename = f"{unique_id}_{file.filename}"
         
-        input_path = os.path.join(UPLOAD_DIR, saved_filename)
-        output_path = os.path.join(OUTPUT_DIR, saved_filename)
+        saved_ai_filename = f"{unique_id}_AI_{file_ai.filename}"
+        input_ai_path = os.path.join(UPLOAD_DIR, saved_ai_filename)
+        with open(input_ai_path, "wb") as buffer:
+            shutil.copyfileobj(file_ai.file, buffer)
+            
+        saved_sim_filename = f"{unique_id}_SIM_{file_sim.filename}"
+        input_sim_path = os.path.join(UPLOAD_DIR, saved_sim_filename)
+        with open(input_sim_path, "wb") as buffer:
+            shutil.copyfileobj(file_sim.file, buffer)
 
-        with open(input_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        output_report_path = os.path.join(OUTPUT_DIR, f"Report_{saved_ai_filename}")
+        output_edited_path = os.path.join(OUTPUT_DIR, f"Edited_{saved_sim_filename}")
 
-        process_master_pdf(input_path, output_path, file.filename, ai_percentage)
+        shared_submission_id = f"trn:oid:::1:{random.randint(1000000000, 9999999999)}"
+
+        process_master_pdf(input_ai_path, output_report_path, file_ai.filename, ai_percentage, shared_submission_id)
+        apply_header_and_footer(input_sim_path, output_edited_path, shared_submission_id)
 
         current_time = get_bdt_time()
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        
         c.execute("UPDATE users SET daily_credits=daily_credits-1 WHERE username=?", (username,))
+        
         c.execute("INSERT INTO file_history (username, filename, processed_date) VALUES (?, ?, ?)", 
-                  (username, saved_filename, current_time))
+                  (username, f"Report_{saved_ai_filename}", current_time))
+        c.execute("INSERT INTO file_history (username, filename, processed_date) VALUES (?, ?, ?)", 
+                  (username, f"Edited_{saved_sim_filename}", current_time))
+                  
         conn.commit()
         conn.close()
 
-        return FileResponse(output_path, media_type="application/pdf", filename=file.filename)
+        return RedirectResponse(url="/", status_code=303)
+        
     except Exception as e:
         return HTMLResponse(content=f"<h3>Error: {str(e)}</h3>", status_code=500)
 
