@@ -254,11 +254,12 @@ def process_master_pdf(user_pdf_path, output_path, original_filename, ai_percent
         bottom_rect = fitz.Rect(0, rect.height - footer_height, rect.width, rect.height)
         page.draw_rect(bottom_rect, fill=(1, 1, 1), color=None, overlay=True)
 
-        page.insert_image(fitz.Rect(20, 15, 90, 35), filename="static/logo.png")
+        if os.path.exists("static/logo.png"):
+            page.insert_image(fitz.Rect(20, 15, 90, 35), filename="static/logo.png")
+            page.insert_image(fitz.Rect(20, rect.height - 35, 90, rect.height - 15), filename="static/logo.png")
+
         page.insert_text(fitz.Point(110, 30), header_text, fontsize=7, color=(0, 0, 0))
         page.insert_text(fitz.Point(rect.width - 200, 30), f"Submission ID {new_id}", fontsize=7, color=(0, 0, 0))
-
-        page.insert_image(fitz.Rect(20, rect.height - 35, 90, rect.height - 15), filename="static/logo.png")
         page.insert_text(fitz.Point(110, rect.height - 20), header_text, fontsize=7, color=(0, 0, 0))
         page.insert_text(fitz.Point(rect.width - 200, rect.height - 20), f"Submission ID {new_id}", fontsize=7, color=(0, 0, 0))
 
@@ -300,7 +301,8 @@ def apply_header_and_footer(input_pdf_path, output_path, shared_id):
 # --- Auth Routes ---
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    # নতুন নিয়মে টেমপ্লেট রিটার্ন করা হলো
+    return templates.TemplateResponse(request=request, name="login.html", context={"request": request, "error": None})
 
 @app.post("/login")
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
@@ -321,7 +323,8 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         return RedirectResponse(url="/", status_code=303)
         
     conn.close()
-    return templates.TemplateResponse("login.html", {"request": request, "error": "ভুল ইউজারনেম বা পাসওয়ার্ড!"})
+    # নতুন নিয়মে টেমপ্লেট রিটার্ন করা হলো
+    return templates.TemplateResponse(request=request, name="login.html", context={"request": request, "error": "ভুল ইউজারনেম বা পাসওয়ার্ড!"})
 
 @app.get("/logout")
 async def logout(request: Request):
@@ -353,7 +356,8 @@ async def home(request: Request):
     user_files = c.fetchall()
     conn.close()
 
-    return templates.TemplateResponse("index.html", {
+    # নতুন নিয়মে টেমপ্লেট রিটার্ন করা হলো
+    return templates.TemplateResponse(request=request, name="index.html", context={
         "request": request, 
         "username": username, 
         "role": role,
@@ -483,7 +487,8 @@ async def admin_dashboard(request: Request):
     
     total_files = len(os.listdir(UPLOAD_DIR)) + len(os.listdir(OUTPUT_DIR))
     
-    return templates.TemplateResponse("admin.html", {"request": request, "users": users, "history": history, "total_files": total_files})
+    # নতুন নিয়মে টেমপ্লেট রিটার্ন করা হলো
+    return templates.TemplateResponse(request=request, name="admin.html", context={"request": request, "users": users, "history": history, "total_files": total_files})
 
 @app.post("/admin/create_user")
 async def create_user(request: Request, new_username: str = Form(...), new_password: str = Form(...), initial_credits: int = Form(5)):
